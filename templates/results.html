@@ -69,14 +69,32 @@
 
 <body>
     <div class="container">
-        <h1>Hasil input kota</h1>
-        <p>{{ data_kota[0] }}</p>
-        <p>{{ data_kota[1] }}</p>
-        <p>{{ data_kota[2] }}</p>
-        <p>{{ jumlah_semut }}</p>
-        <p>{{ jumlah_iterasi }}</p>
-        <a href="/">Kembali ke Halaman Utama</a>
+        
+        <h1>Visualisasi Kota</h1>
+        <img src = {{ file_url }} alt="Gambar Visualisasi">
+        <h1>Jarak</h1>
+        <p>{{ jarak }}</p>
+        <h1>Jalur Kota</h1>
+        <p>{{ jalur }}</p>
+        <a href="/" id="back-to-home">Kembali ke Halaman Utama</a>
     </div>
 </body>
 
 </html>
+
+<script>
+    // Ambil nama file dari URL gambar
+    const fileUrl = "{{ file_url }}";
+    const filename = fileUrl.split('/').pop();
+
+    document.getElementById('back-to-home').addEventListener('click', function(event) {
+        event.preventDefault();
+        fetch('/delete-plot', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ filename: filename })
+        }).then(() => {
+            window.location.href = '/';
+        });
+    });
+</script>
