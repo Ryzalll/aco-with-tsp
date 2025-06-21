@@ -15,6 +15,36 @@ PLOT_FOLDER = os.path.join(app.root_path, 'static', 'plots')
 if not os.path.exists(PLOT_FOLDER):
     os.makedirs(PLOT_FOLDER)
     
+def getDataPheromones(data):
+  cities = sorted(list(set([k[0] for k in data.keys()])))
+
+  # 2. Buat struktur data yang lebih mudah untuk dirender sebagai tabel
+  # Kita akan membuat list of lists, atau list of dictionaries jika ingin lebih eksplisit
+  # Untuk kasus ini, list of lists lebih sederhana
+  table_data = []
+
+  for row_city in cities:
+      row = [row_city] # Mulai baris dengan nama kota baris
+      for col_city in cities:
+          # Cari nilai yang sesuai di dictionary asli
+          # Perhatikan bahwa key di dictionary adalah tuple, misalnya ('Gresik', 'Surabaya')
+          value = data.get((row_city, col_city), 'N/A') # Gunakan .get() untuk menghindari KeyError
+          table_data.append(value) # Untuk menyimpan nilai ke dalam list, tetapi ini kurang cocok untuk format tabel
+          row.append(f"{value:.5f}") # Format nilai float menjadi 5 desimal
+      table_data.append(row)
+
+
+  # Versi lebih baik untuk struktur data tabel:
+  # Mengonversi dictionary menjadi dictionary of dictionaries untuk akses O(1)
+  # Ini membuat pencarian nilai lebih efisien di template
+  processed_data = {}
+  for (from_city, to_city), value in data.items():
+      if from_city not in processed_data:
+          processed_data[from_city] = {}
+      processed_data[from_city][to_city] = value
+      
+  return processed_data
+
 def penguapan_pheromones(pheromones, rho):
     for key in pheromones:
         pheromones[key] = (1 - rho) * pheromones[key]
@@ -163,6 +193,7 @@ def update_pheromones_with_del_fit(jalur_semut, delt_fitness, pheromones):
 
 def aco(jumlah_iterasi, jumlah_semut, all_kota, jalur_kota,p, pheromones, kota):
   priors = {}
+  all_pheromones = []
   text_rout = ''
   for jalur in jalur_kota:
     priors[jalur] = 0 if jalur_kota[jalur] == 0 else 1/jalur_kota[jalur]
@@ -219,9 +250,11 @@ def aco(jumlah_iterasi, jumlah_semut, all_kota, jalur_kota,p, pheromones, kota):
     pheromones = update_pheromones_with_del_fit(jalur_semut, delt_fitness, pheromones)
     pheromones = penguapan_pheromones(pheromones, p)
     
+    all_pheromones.append(getDataPheromones(pheromones))
+    
     text_rout += '</div>'
 
-  return jalur_hasil_akhir, jalur_rangkaian_kota_akhir, pheromones, text_rout
+  return jalur_hasil_akhir, jalur_rangkaian_kota_akhir, pheromones, text_rout, all_pheromones
 
 # Rute untuk menampilkan formulir input nama
 @app.route('/', methods=['GET'])
@@ -291,7 +324,7 @@ def results():
     all_kota = tuple(list(kota.keys()))
 
     print(aco(jumlah_iterasi, jumlah_semut, all_kota,jalur_kota, p,pheromones, kota))
-    jalur_hasil_akhir, jalur_rangkaian_kota_akhir, pheromones,text_rout = aco(jumlah_iterasi, jumlah_semut, all_kota,jalur_kota, p, pheromones, kota)
+    jalur_hasil_akhir, jalur_rangkaian_kota_akhir, pheromones,text_rout, all_pheromones = aco(jumlah_iterasi, jumlah_semut, all_kota,jalur_kota, p, pheromones, kota)
     
     jalur_hasil_akhir = round(jalur_hasil_akhir, 3)
     
@@ -307,7 +340,8 @@ def results():
                                jarak=jalur_hasil_akhir, 
                                jalur=str_jalur,
                                file_url = url_for('static',filename = f'plots/{file_name}'),
-                               text_html = text_rout)  # Pastikan ini ada!
+                               text_html = text_rout,
+                               semua_pheromones = all_pheromones)  # Pastikan ini ada!
     else:
         print("DEBUG: No valid city data found, redirecting to index.")
         return redirect(url_for('index')) # Hapus ini sementara untuk debugging
