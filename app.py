@@ -144,11 +144,11 @@ def hitung_komulatif_rute(no_semut,semut_1,jalur_one_semut, priors, pheromones, 
     if random_number < sum_prob:
       semut_1.append(jalur[-1])
       break
-  print(f"Misalkan bilangan acak yang dibangkitkan adalah {random_number},maka rute yang dipilih adalah {semut_1[-1]}")
+  text = f"<p>Misalkan bilangan acak yang dibangkitkan adalah {random_number},maka rute yang dipilih adalah {semut_1[-1]}</p>"
 
   jalur_one_semut += hitung_jarak(kota,semut_1[-2],semut_1[-1])
 
-  return semut_1, jalur_one_semut
+  return semut_1, jalur_one_semut, text
 
 # Update pheromones dengan jalur yang dilewati semut
 def update_pheromones_with_del_fit(jalur_semut, delt_fitness, pheromones):
@@ -163,7 +163,7 @@ def update_pheromones_with_del_fit(jalur_semut, delt_fitness, pheromones):
 
 def aco(jumlah_iterasi, jumlah_semut, all_kota, jalur_kota,p, pheromones, kota):
   priors = {}
-
+  text_rout = ''
   for jalur in jalur_kota:
     priors[jalur] = 0 if jalur_kota[jalur] == 0 else 1/jalur_kota[jalur]
 
@@ -173,7 +173,7 @@ def aco(jumlah_iterasi, jumlah_semut, all_kota, jalur_kota,p, pheromones, kota):
   jalur_rangkaian_kota_akhir = None
 
   for i in range(jumlah_iterasi):
-
+    text_rout += f'<div><p>Iterasi ke-{i+1}</p>'
     jalur_semut = []
 
     for i in range(jumlah_semut):
@@ -184,12 +184,14 @@ def aco(jumlah_iterasi, jumlah_semut, all_kota, jalur_kota,p, pheromones, kota):
     delt_fitness = []
 
     for i in range(len(jalur_semut)):
+      text_rout += f'<p>Kota awal semut ke-{i+1} adalah {jalur_semut[i][0]} </p>'
       one_ant = jalur_semut[i]
       jalur_one_semut = 0
       for j in range(len(all_kota)-1):
-        one_ant,jalur_one_semut  = hitung_komulatif_rute(i+1, one_ant, jalur_one_semut, priors, pheromones, kota)
+        one_ant,jalur_one_semut,text_temp  = hitung_komulatif_rute(i+1, one_ant, jalur_one_semut, priors, pheromones, kota)
         # one_ant,jalur_one_semut = hitung_komulatif_rute_with_latex(i+1,one_ant, jalur_one_semut)
-
+        text_rout += text_temp
+        
       for one_kota in all_kota:
         if one_kota not in one_ant:
           one_ant.append(one_kota)
@@ -203,17 +205,23 @@ def aco(jumlah_iterasi, jumlah_semut, all_kota, jalur_kota,p, pheromones, kota):
         if jalur_one_semut < jalur_hasil_akhir:
           jalur_hasil_akhir = jalur_one_semut
           jalur_rangkaian_kota_akhir = one_ant
-
       jalur_semut[i] = one_ant
-      print("Jalur semut ke",i+1,one_ant)
-      print("Jarak tempuh semut ke",i+1,jalur_one_semut)
-      print("Delta fitness semut ke",i+1,delt_fitness[i])
-      print('\n---\n')
-    print(jalur_semut)
+
+      # print("Jalur semut ke",i+1,one_ant)
+      # print("Jarak tempuh semut ke",i+1,jalur_one_semut)
+      # print("Delta fitness semut ke",i+1,delt_fitness[i])
+      # print('\n---\n')
+      
+      text_rout += ("<p>Jalur semut ke-" + str(i+1) +' = '+ str(one_ant)+ '</p>')
+      text_rout += ("<p>Jarak tempuh semut ke-"+ str(i+1) +' = '+ str(jalur_one_semut)+ '</p>')
+      text_rout += ("<p>Delta fitness semut ke-"+ str(i+1) +' = '+ str(delt_fitness[i])+ '</p>')
+      
     pheromones = update_pheromones_with_del_fit(jalur_semut, delt_fitness, pheromones)
     pheromones = penguapan_pheromones(pheromones, p)
+    
+    text_rout += '</div>'
 
-  return jalur_hasil_akhir, jalur_rangkaian_kota_akhir, pheromones
+  return jalur_hasil_akhir, jalur_rangkaian_kota_akhir, pheromones, text_rout
 
 # Rute untuk menampilkan formulir input nama
 @app.route('/', methods=['GET'])
@@ -283,7 +291,7 @@ def results():
     all_kota = tuple(list(kota.keys()))
 
     print(aco(jumlah_iterasi, jumlah_semut, all_kota,jalur_kota, p,pheromones, kota))
-    jalur_hasil_akhir, jalur_rangkaian_kota_akhir, pheromones = aco(jumlah_iterasi, jumlah_semut, all_kota,jalur_kota, p, pheromones, kota)
+    jalur_hasil_akhir, jalur_rangkaian_kota_akhir, pheromones,text_rout = aco(jumlah_iterasi, jumlah_semut, all_kota,jalur_kota, p, pheromones, kota)
     
     jalur_hasil_akhir = round(jalur_hasil_akhir, 3)
     
@@ -298,7 +306,8 @@ def results():
         return render_template('results.html', 
                                jarak=jalur_hasil_akhir, 
                                jalur=str_jalur,
-                               file_url = url_for('static',filename = f'plots/{file_name}'))  # Pastikan ini ada!
+                               file_url = url_for('static',filename = f'plots/{file_name}'),
+                               text_html = text_rout)  # Pastikan ini ada!
     else:
         print("DEBUG: No valid city data found, redirecting to index.")
         return redirect(url_for('index')) # Hapus ini sementara untuk debugging
