@@ -11,9 +11,11 @@ import os
 
 app = Flask(__name__)
 
+# setting up directory for store files
 PLOT_FOLDER = os.path.join(app.root_path, 'static', 'plots')
 if not os.path.exists(PLOT_FOLDER):
     os.makedirs(PLOT_FOLDER)
+
     
 def getDataPheromones(data):
   cities = sorted(list(set([k[0] for k in data.keys()])))

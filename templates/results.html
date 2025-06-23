@@ -64,16 +64,40 @@
         a:hover {
             background-color: #5a6268;
         }
+        #outer-iter{
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            box-sizing: border-box;
+            padding-right: 100px;
+        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        
+
         <h1>Visualisasi Kota</h1>
-        <img src = {{ file_url }} alt="Gambar Visualisasi">
+        <img src={{ file_url }} alt="Gambar Visualisasi">
         <h1>Pheromones</h1>
-        {{ semua_pheromones }}
+        <!-- {{ semua_pheromones }} -->
+
+        <ul style="list-style-type: none;" id="outer-iter">
+            {% for pheromones in semua_pheromones %}
+            <li style="font-weight: bold; margin-left: 40px;">Iterasi ke-{{ loop.index }}</li>
+            <ul style="list-style-type: none;">
+                {% for p_kota_from, p_kota_tos in pheromones.items() %}
+                <li>Kota: {{ p_kota_from}}</li>
+                <ul style="list-style-type: none;">
+                    {% for kota_to, pheromone in p_kota_tos.items() %}
+                    <li>Pheromones {{ p_kota_from }} ke {{ kota_to }} sebesar = {{ pheromone }}</li>
+                    {% endfor %}
+                </ul>
+                {% endfor %}
+            </ul>
+            {% endfor %}
+        </ul>
         <h1>Jarak</h1>
         <p>{{ jarak }}</p>
         <h1>Jalur Kota</h1>
@@ -85,11 +109,13 @@
 </html>
 
 <script>
+
+
     // Ambil nama file dari URL gambar
     const fileUrl = "{{ file_url }}";
     const filename = fileUrl.split('/').pop();
 
-    document.getElementById('back-to-home').addEventListener('click', function(event) {
+    document.getElementById('back-to-home').addEventListener('click', function (event) {
         event.preventDefault();
         fetch('/delete-plot', {
             method: 'POST',
