@@ -190,7 +190,7 @@ def update_pheromones_with_del_fit(jalur_semut, delt_fitness, pheromones):
         for j in range(len(jalur_semut[i]) - 1):
           if jalur_semut[i][j:j+2] == list(key):
             pheromones[key] += delt_fitness[i]
-    return pheromones
+  return pheromones
 
 
 def aco(jumlah_iterasi, jumlah_semut, all_kota, jalur_kota,p, pheromones, kota):
