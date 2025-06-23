@@ -64,13 +64,13 @@
         a:hover {
             background-color: #5a6268;
         }
-        #outer-iter{
+        .wrapper{
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: center;
             box-sizing: border-box;
-            padding-right: 100px;
+            
         }
     </style>
 </head>
@@ -82,22 +82,35 @@
         <img src={{ file_url }} alt="Gambar Visualisasi">
         <h1>Pheromones</h1>
         <!-- {{ semua_pheromones }} -->
-
-        <ul style="list-style-type: none;" id="outer-iter">
-            {% for pheromones in semua_pheromones %}
-            <li style="font-weight: bold; margin-left: 40px;">Iterasi ke-{{ loop.index }}</li>
-            <ul style="list-style-type: none;">
-                {% for p_kota_from, p_kota_tos in pheromones.items() %}
-                <li>Kota: {{ p_kota_from}}</li>
-                <ul style="list-style-type: none;">
-                    {% for kota_to, pheromone in p_kota_tos.items() %}
-                    <li>Pheromones {{ p_kota_from }} ke {{ kota_to }} sebesar = {{ pheromone }}</li>
+        <div class="wrapper">
+        {% for iterasi in semua_pheromones %}
+            <h3 style="margin-top: 30px;">Iterasi ke-{{ loop.index }}</h3>
+            <table border="1" cellpadding="8" cellspacing="0" style="border-collapse: collapse; text-align: center;">
+                <thead style="background-color: #e0f7fa;">
+                    <tr>
+                        <th>τ<sub>ij</sub></th>
+                        {% set kota_list = iterasi.keys() %}
+                        {% for kota in kota_list %}
+                            <th>{{ kota }}</th>
+                        {% endfor %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for from_kota in kota_list %}
+                        <tr>
+                            <th style="background-color: #f1f8e9;">{{ from_kota }}</th>
+                            {% for to_kota in kota_list %}
+                                {% set pheromone = iterasi[from_kota][to_kota] %}
+                                <td>τ<sub>{{ from_kota.lower() }}{{ to_kota.lower() }}</sub> = {{ '%.5f'|format(pheromone) }}</td>
+                            {% endfor %}
+                        </tr>
                     {% endfor %}
-                </ul>
-                {% endfor %}
-            </ul>
-            {% endfor %}
-        </ul>
+                </tbody>
+            </table>
+        {% endfor %}
+        </div>
+
+
         <h1>Jarak</h1>
         <p>{{ jarak }}</p>
         <h1>Jalur Kota</h1>
